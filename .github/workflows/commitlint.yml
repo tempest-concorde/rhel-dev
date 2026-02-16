@@ -10,6 +10,8 @@ on:
       - 'main'
 jobs:
   lint:
+    permissions:
+      contents: read
     if: ${{ github.head_ref != 'main' }}
     runs-on: ubuntu-latest
     steps:
