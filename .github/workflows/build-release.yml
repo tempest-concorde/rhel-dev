@@ -22,7 +22,7 @@ jobs:
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     container:
-      image: registry.access.redhat.com/ubi9/ubi
+      image: registry.access.redhat.com/ubi9/ubi@sha256:b8923f58ef6aebe2b8f543f8f6c5af15c6f9aeeef34ba332f33bf7610012de0c  # ubi9
       options: --privileged
     permissions:
       contents: write
@@ -38,7 +38,7 @@ jobs:
       run: dnf -y install podman buildah skopeo make wget git jq
 
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
     - name: Access a subscription via activation key
       env:
@@ -61,7 +61,7 @@ jobs:
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Log in to Quay.io
-      uses: redhat-actions/podman-login@v1
+      uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
       with:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
@@ -69,7 +69,7 @@ jobs:
         auth_file_path: /run/containers/0/auth.json
 
     - name: Log in to registry.redhat.io
-      uses: redhat-actions/podman-login@v1
+      uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
       with:
         username: ${{ secrets.RH_REGISTRY_USER }}
         password: ${{ secrets.RH_REGISTRY_PASSWORD }}
@@ -81,7 +81,7 @@ jobs:
 
     - name: Build Image
       id: build-image
-      uses: redhat-actions/buildah-build@v2
+      uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
       with:
         image: ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}
         tags: ${{ env.PLATFORM_PAIR }}-${{ github.sha }}
@@ -103,7 +103,7 @@ jobs:
         touch "/tmp/digests/${digest#sha256:}"
 
     - name: Upload digest
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
       with:
         name: digests-${{ env.PLATFORM_PAIR }}
         path: /tmp/digests/*
@@ -121,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     container:
-      image: registry.access.redhat.com/ubi9/ubi
+      image: registry.access.redhat.com/ubi9/ubi@sha256:b8923f58ef6aebe2b8f543f8f6c5af15c6f9aeeef34ba332f33bf7610012de0c  # ubi9
       options: --privileged
     permissions:
       contents: write
@@ -132,7 +132,7 @@ jobs:
       run: dnf -y install podman buildah skopeo jq
 
     - name: Download digests
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
       with:
         path: /tmp/digests
         pattern: digests-*
@@ -152,7 +152,7 @@ jobs:
         echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Log in to Quay.io
-      uses: redhat-actions/podman-login@v1
+      uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
       with:
         username: ${{ secrets.REGISTRY_USER }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
@@ -184,7 +184,7 @@ jobs:
         buildah manifest inspect ${IMAGE_URI}:prod
 
     - name: Install Cosign
-      uses: sigstore/cosign-installer@v3.7.0
+      uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
     - name: Sign image recursively
       run: |
