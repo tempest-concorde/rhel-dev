@@ -240,6 +240,9 @@ jobs:
 
     - name: Generate SBOM
       uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
+      env:
+        SYFT_SELECT_CATALOGERS: "-file"
+        SYFT_FILE_METADATA_SELECTION: "none"
       with:
         image: ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}@${{ needs.merge.outputs.digest }}
         format: spdx-json
