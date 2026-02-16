@@ -14,6 +14,8 @@ RUN dnf install -y \
     make \
     maven \
     podman \
+    python3 \
+    python3-pip \
     qemu-guest-agent \
     skopeo \
     tailscale \
