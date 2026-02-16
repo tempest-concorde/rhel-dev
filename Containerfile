@@ -9,15 +9,16 @@ RUN dnf install -y \
     qemu-guest-agent \
     podman \
     skopeo \
-    git \ 
+    git \
     vim \
     make \
     vim-enhanced \
     go \
     java-21-openjdk \
-    tailscale \ 
+    tailscale \
     java-21-openjdk-devel \
-    maven && \
+    maven \
+    coreos-installer && \
     dnf clean all
 
 COPY direnv /usr/local/bin/direnv
@@ -26,11 +27,13 @@ RUN chmod +x /usr/local/bin/direnv
 # Direnv shell hook for login shells
 COPY direnv.sh /etc/profile.d/direnv.sh
 
-# OpenShift install binaries
-COPY openshift-install-418 /usr/local/bin/openshift-install-418
-COPY openshift-install-419 /usr/local/bin/openshift-install-419
-COPY openshift-install-420 /usr/local/bin/openshift-install-420
-RUN chmod +x /usr/local/bin/openshift-install-*
+# OpenShift install binaries with alternatives for version switching
+COPY openshift-install-4* /usr/local/bin/
+RUN chmod +x /usr/local/bin/openshift-install-4* && \
+    for bin in /usr/local/bin/openshift-install-4*; do \
+        ver=$(basename "$bin" | sed 's/openshift-install-//'); \
+        update-alternatives --install /usr/bin/openshift-install openshift-install "$bin" "${ver##4}"; \
+    done
 
 # OC and kubectl
 COPY oc /usr/local/bin/oc
@@ -48,5 +51,13 @@ RUN chmod +x /usr/local/bin/gomplate
 # Cosign
 COPY cosign /usr/local/bin/cosign
 RUN chmod +x /usr/local/bin/cosign
+
+# ArgoCD CLI
+COPY argocd /usr/local/bin/argocd
+RUN chmod +x /usr/local/bin/argocd
+
+# Butane (Fedora CoreOS config transpiler)
+COPY butane /usr/local/bin/butane
+RUN chmod +x /usr/local/bin/butane
 
 RUN bootc container lint
