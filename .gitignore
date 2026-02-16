@@ -211,3 +211,11 @@ config.toml
 .envrc
 docker-auth.json
 direnv
+openshift-install-418
+openshift-install-419
+openshift-install-420
+oc
+oc-mirror
+kubectl
+gomplate
+cosign
