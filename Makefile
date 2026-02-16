@@ -2,13 +2,10 @@
 UNAME_ARCH := $(shell uname -m)
 ifeq ($(UNAME_ARCH),x86_64)
     BINARY_ARCH := amd64
-    BUTANE_ARCH := amd64
 else ifeq ($(UNAME_ARCH),aarch64)
     BINARY_ARCH := arm64
-    BUTANE_ARCH := aarch64
 else
     BINARY_ARCH := $(UNAME_ARCH)
-    BUTANE_ARCH := $(UNAME_ARCH)
 endif
 
 include versions.env
@@ -71,12 +68,7 @@ get-argocd:
 	wget https://github.com/argoproj/argo-cd/releases/download/v$(ARGOCD_VERSION)/argocd-linux-$(BINARY_ARCH) -O argocd
 	chmod +x argocd
 
-# Butane (Fedora CoreOS config transpiler)
-get-butane:
-	wget https://mirror.openshift.com/pub/openshift-v4/clients/butane/latest/butane-$(BUTANE_ARCH) -O butane
-	chmod +x butane
-
-get-deps: get-direnv $(OCP_TARGETS) get-oc get-oc-mirror get-gomplate get-cosign get-argocd get-butane
+get-deps: get-direnv $(OCP_TARGETS) get-oc get-oc-mirror get-gomplate get-cosign get-argocd
 
 
 dev:
