@@ -118,6 +118,9 @@ jobs:
 
   merge:
     name: Create multi-arch manifest and sign
+    outputs:
+      digest: ${{ steps.manifest_digest.outputs.digest }}
+      version: ${{ steps.parse_version.outputs.VERSION }}
     runs-on: ubuntu-latest
     needs: build
     container:
@@ -200,3 +203,72 @@ jobs:
           -a run_id=${{ github.run_id }} \
           -a run_attempt="$GITHUB_RUN_ATTEMPT" \
           ${IMAGE_URI}:prod
+
+    - name: Get manifest digest
+      id: manifest_digest
+      run: |
+        IMAGE_URI="${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}"
+        DIGEST=$(skopeo inspect --format '{{.Digest}}' docker://${IMAGE_URI}:prod)
+        echo "digest=${DIGEST}" >> $GITHUB_OUTPUT
+
+  attest:
+    name: Attest, scan, and generate SBOM
+    runs-on: ubuntu-latest
+    needs: merge
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      security-events: write
+
+    steps:
+    - name: Harden runner
+      uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+      with:
+        egress-policy: audit
+
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+    - name: Log in to Quay.io
+      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
+      with:
+        registry: ${{ env.IMAGE_REGISTRY }}
+        username: ${{ secrets.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
+
+    - name: Generate SBOM
+      uses: anchore/sbom-action@28d71544de8eaf1b958d335707167c5f783590ad # v0.22.2
+      with:
+        image: ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}@${{ needs.merge.outputs.digest }}
+        format: spdx-json
+        output-file: sbom.spdx.json
+
+    - name: Attest build provenance
+      uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
+      with:
+        subject-name: ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}
+        subject-digest: ${{ needs.merge.outputs.digest }}
+        push-to-registry: true
+
+    - name: Attest SBOM
+      uses: actions/attest-sbom@bd218ad0dbcb3e146bd073d1d9c6d78e08aa8a0b # v2.4.0
+      with:
+        subject-name: ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}
+        subject-digest: ${{ needs.merge.outputs.digest }}
+        sbom-path: sbom.spdx.json
+        push-to-registry: true
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@c1824fd6edce30d7ab345a9989de00bbd46ef284 # v0.34.0
+      with:
+        image-ref: ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}@${{ needs.merge.outputs.digest }}
+        format: sarif
+        output: trivy-results.sarif
+        severity: CRITICAL,HIGH
+
+    - name: Upload Trivy results to GitHub Security
+      uses: github/codeql-action/upload-sarif@f5c2471be782132e47a6e6f9c725e56730d6e9a3 # v3.32.3
+      with:
+        sarif_file: trivy-results.sarif

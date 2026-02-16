@@ -1,0 +1,5 @@
+# Default owner for all files
+* @chbutler
+
+# Workflow and CI configuration
+.github/ @chbutler
