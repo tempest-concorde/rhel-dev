@@ -22,7 +22,7 @@ jobs:
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     container:
-      image: registry.access.redhat.com/ubi9/ubi
+      image: registry.access.redhat.com/ubi9/ubi@sha256:b8923f58ef6aebe2b8f543f8f6c5af15c6f9aeeef34ba332f33bf7610012de0c  # ubi9
       options: --privileged
     permissions:
       contents: read
@@ -37,7 +37,7 @@ jobs:
       run: dnf -y install podman buildah skopeo make wget git
 
     - name: Checkout repository
-      uses: actions/checkout@v6
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
     - name: Access a subscription via activation key
       env:
@@ -54,7 +54,7 @@ jobs:
         echo $auth > $HOME/.docker/config.json
 
     - name: Log in to registry.redhat.io
-      uses: redhat-actions/podman-login@v1
+      uses: redhat-actions/podman-login@4934294ad0449894bcd1e9f191899d7292469603 # v1
       with:
         username: ${{ secrets.RH_REGISTRY_USER }}
         password: ${{ secrets.RH_REGISTRY_PASSWORD }}
@@ -66,7 +66,7 @@ jobs:
 
     - name: Build Image
       id: build-image
-      uses: redhat-actions/buildah-build@v2
+      uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
       with:
         image: ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}
         tags: ${{ env.PLATFORM_PAIR }}-${{ github.sha }}
