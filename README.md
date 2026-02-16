@@ -1,25 +1,59 @@
-# rhel-dev-arm
-Simple setup for a development machine on arm using bootc.
+# rhel-dev
 
-Why: 
-- On Mac OS using UTM or similar qcow images are painful to use. It's much easier to use an iso installer.
-- ISO simulates edge deployment requirements
+Custom RHEL 10 bootc container image for development machines.
+Builds ISO installers or qcow2 VM images targeting both amd64 and arm64 (e.g. UTM on macOS).
 
+## Why
 
-# Making an iso.
-Passing in secrets is not opinionated. To make it as easy as possible a simple template is used to build out the config.toml
+- On macOS using UTM or similar, qcow images are painful to set up manually. An ISO installer is much easier.
+- ISO simulates edge deployment requirements.
+
+## What's included
+
+Base: `registry.redhat.io/rhel10/rhel-bootc`
+
+Development tools installed via dnf: Go, Java 21, Maven, podman, buildah, skopeo, and more.
+
+Additional binaries copied into the image:
+
+- `oc` and `oc-mirror` (OpenShift CLI)
+- `openshift-install` (4.18, 4.19, 4.20)
+- `direnv`
+- `gomplate`
+- `cosign`
+
+## Usage
+
+### Prerequisites
+
+- podman (not Docker)
+- Builds must run as root
+
+### Environment variables
+
+Set these before building (use `direnv` or similar):
 
 ```shell
 export SSH_KEY_PATH=$HOME/.ssh/id_rsa.pub
-export DOCKER_AUTH_PATH=`pwd`/docker-auth.json # or similar for your container registry.
-export PASSWORD_HASH='' # us openssl password -6 Make sure to use raw strings (single quotes)
+export DOCKER_AUTH_PATH=$(pwd)/docker-auth.json
+export PASSWORD_HASH='' # openssl passwd -6 (use single quotes)
 export USERNAME=myusername
 ```
 
-`make iso` will look after the rest. Using `direnv` or similar to manage the secrets is encouraged.
+### Build
 
+```shell
+# Build an ISO installer
+make iso
 
-# Fun things I've found
-1. Root users don't cache credentials for podman in RHEL. Rebooting will require re-authenticating with `quay.io` and `registry.redhat.io`
-2. Don't try to add more than one group to a user using `--groups`
+# Build a qcow2 VM image
+make qcow
+```
+
+`make iso` / `make qcow` will download dependencies and render the config template automatically.
+
+## Notes
+
+1. Root users don't cache credentials for podman in RHEL. Rebooting will require re-authenticating with `quay.io` and `registry.redhat.io`.
+2. Don't try to add more than one group to a user using `--groups`.
 3. It's much easier if you build as root and don't use sudo.
