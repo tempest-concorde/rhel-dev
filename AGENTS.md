@@ -9,7 +9,7 @@ rhel-dev builds a custom RHEL 10 bootc container image for development machines,
 ## Build Commands
 
 ```shell
-# Download all required binaries (direnv, openshift-install, oc, oc-mirror, gomplate, cosign)
+# Download all required binaries (direnv, openshift-install, oc, oc-mirror, gomplate, cosign, argocd, butane)
 make get-deps
 
 # Generate config.toml from template (requires env vars set, see below)
@@ -25,7 +25,7 @@ make qcow
 make dev
 ```
 
-Individual binary targets: `get-direnv`, `get-openshift-install-418`, `get-openshift-install-419`, `get-openshift-install-420`, `get-oc`, `get-oc-mirror`, `get-gomplate`, `get-cosign`.
+Individual binary targets: `get-direnv`, `get-openshift-install-4{18..21}` (dynamically generated), `get-oc`, `get-oc-mirror`, `get-gomplate`, `get-cosign`, `get-argocd`, `get-butane`.
 
 ## Required Environment Variables
 
@@ -42,8 +42,9 @@ These are interpolated into `config.toml` via gomplate templating of `config.tom
 
 This is an infrastructure-as-code project with no application source code. The key files are:
 
-- **Containerfile** — defines the bootc image: base RHEL 10, dnf packages, and binary tools copied from the build context
-- **Makefile** — orchestrates binary downloads (architecture-aware: amd64/arm64) and image builds via podman + bootc-image-builder
+- **versions.env** — single source of truth for OCP version range and tool versions; consumed by Makefile via `include`
+- **Containerfile** — defines the bootc image: base RHEL 10, dnf packages (including coreos-installer), binary tools copied from the build context, and `update-alternatives` for openshift-install version switching
+- **Makefile** — orchestrates binary downloads (architecture-aware: amd64/arm64) and image builds via podman + bootc-image-builder; uses `define`/`foreach`/`eval` to dynamically generate openshift-install targets from `versions.env`
 - **config.toml.tmpl** — gomplate template producing Kickstart config for ISO/qcow2 builds (user, SSH keys, registry auth)
 - **direnv.sh** — shell hook copied into the image at `/etc/profile.d/`
 
