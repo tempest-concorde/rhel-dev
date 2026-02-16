@@ -1,22 +1,8 @@
 # Security Policy
 
-## Supported Versions
+## FOR DEMONSTRATION USE ONLY
 
-Only the latest release is supported with security updates.
-
-| Version | Supported |
-|---------|-----------|
-| Latest  | Yes       |
-| Older   | No        |
-
-## Reporting a Vulnerability
-
-If you discover a security vulnerability, please report it responsibly:
-
-1. **Do not** open a public GitHub issue for security vulnerabilities.
-2. Email the maintainer at the address listed in the repository profile, or use [GitHub private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability).
-3. Include a description of the vulnerability, steps to reproduce, and any potential impact.
-4. You should receive an acknowledgment within 72 hours.
+Do NOT presume this is security maintained. It's meant for a single user. The binaries are not released due to subscription concerns.
 
 ## Security Practices
 

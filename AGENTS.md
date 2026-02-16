@@ -25,7 +25,7 @@ make qcow
 make dev
 ```
 
-Individual binary targets: `get-direnv`, `get-openshift-install-4{18..21}` (dynamically generated), `get-oc`, `get-oc-mirror`, `get-gomplate`, `get-cosign`, `get-argocd`, `get-butane`.
+Individual binary targets: `get-direnv`, `get-openshift-install-4{18..21}` (dynamically generated), `get-oc`, `get-oc-mirror`, `get-gomplate`, `get-cosign`, `get-argocd`. Note: `butane` and `yq` are installed via dnf (butane from RHEL AppStream, yq from EPEL 10) rather than binary download.
 
 ## Required Environment Variables
 

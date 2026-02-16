@@ -2,22 +2,24 @@ FROM registry.redhat.io/rhel10/rhel-bootc@sha256:612eebb0ad918e2dd2e265e2cb9f6d7
 
 RUN dnf group install -y "Minimal Install" && dnf clean all
 RUN dnf config-manager --add-repo https://pkgs.tailscale.com/stable/centos/10/tailscale.repo
-
+RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
 
 RUN dnf install -y \
-    qemu-guest-agent \
-    podman \
-    skopeo \
+    butane \
+    coreos-installer \
     git \
-    vim \
-    make \
-    vim-enhanced \
     go \
     java-21-openjdk \
-    tailscale \
     java-21-openjdk-devel \
+    make \
     maven \
-    coreos-installer && \
+    podman \
+    qemu-guest-agent \
+    skopeo \
+    tailscale \
+    vim \
+    vim-enhanced \
+    yq && \
     dnf clean all
 
 COPY direnv /usr/local/bin/direnv
@@ -54,9 +56,5 @@ RUN chmod +x /usr/local/bin/cosign
 # ArgoCD CLI
 COPY argocd /usr/local/bin/argocd
 RUN chmod +x /usr/local/bin/argocd
-
-# Butane (Fedora CoreOS config transpiler)
-COPY butane /usr/local/bin/butane
-RUN chmod +x /usr/local/bin/butane
 
 RUN bootc container lint
