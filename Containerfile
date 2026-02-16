@@ -20,7 +20,33 @@ RUN dnf install -y \
     maven && \
     dnf clean all
 
-COPY direnv /usr/bin/local/direnv
-RUN chmod +x /usr/bin/local/direnv
+COPY direnv /usr/local/bin/direnv
+RUN chmod +x /usr/local/bin/direnv
+
+# Direnv shell hook for login shells
+COPY direnv.sh /etc/profile.d/direnv.sh
+
+# OpenShift install binaries
+COPY openshift-install-418 /usr/local/bin/openshift-install-418
+COPY openshift-install-419 /usr/local/bin/openshift-install-419
+COPY openshift-install-420 /usr/local/bin/openshift-install-420
+RUN chmod +x /usr/local/bin/openshift-install-*
+
+# OC and kubectl
+COPY oc /usr/local/bin/oc
+COPY kubectl /usr/local/bin/kubectl
+RUN chmod +x /usr/local/bin/oc /usr/local/bin/kubectl
+
+# oc-mirror v2
+COPY oc-mirror /usr/local/bin/oc-mirror
+RUN chmod +x /usr/local/bin/oc-mirror
+
+# Gomplate
+COPY gomplate /usr/local/bin/gomplate
+RUN chmod +x /usr/local/bin/gomplate
+
+# Cosign
+COPY cosign /usr/local/bin/cosign
+RUN chmod +x /usr/local/bin/cosign
 
 RUN bootc container lint

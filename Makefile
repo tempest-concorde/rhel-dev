@@ -24,11 +24,52 @@ get_node:
 get-direnv:
 	wget https://github.com/direnv/direnv/releases/download/v2.37.1/direnv.linux-$(BINARY_ARCH) -O direnv
 
-get-deps: get_node get_vma get-direnv
+# OpenShift Install binaries (versions 4.18, 4.19, 4.20)
+get-openshift-install-418:
+	wget https://mirror.openshift.com/pub/openshift-v4/$(UNAME_ARCH)/clients/ocp/stable-4.18/openshift-install-linux.tar.gz -O openshift-install-418.tar.gz
+	tar -xzf openshift-install-418.tar.gz openshift-install
+	mv openshift-install openshift-install-418
+	rm openshift-install-418.tar.gz
+
+get-openshift-install-419:
+	wget https://mirror.openshift.com/pub/openshift-v4/$(UNAME_ARCH)/clients/ocp/stable-4.19/openshift-install-linux.tar.gz -O openshift-install-419.tar.gz
+	tar -xzf openshift-install-419.tar.gz openshift-install
+	mv openshift-install openshift-install-419
+	rm openshift-install-419.tar.gz
+
+get-openshift-install-420:
+	wget https://mirror.openshift.com/pub/openshift-v4/$(UNAME_ARCH)/clients/ocp/stable-4.20/openshift-install-linux.tar.gz -O openshift-install-420.tar.gz
+	tar -xzf openshift-install-420.tar.gz openshift-install
+	mv openshift-install openshift-install-420
+	rm openshift-install-420.tar.gz
+
+# OC and kubectl (latest stable)
+get-oc:
+	wget https://mirror.openshift.com/pub/openshift-v4/$(UNAME_ARCH)/clients/ocp/stable/openshift-client-linux.tar.gz -O oc.tar.gz
+	tar -xzf oc.tar.gz oc kubectl
+	rm oc.tar.gz
+
+# Gomplate binary
+get-gomplate:
+	wget https://github.com/hairyhenderson/gomplate/releases/download/v4.3.3/gomplate_linux-$(BINARY_ARCH) -O gomplate
+	chmod +x gomplate
+
+# oc-mirror v2
+get-oc-mirror:
+	wget https://mirror.openshift.com/pub/openshift-v4/$(UNAME_ARCH)/clients/ocp/stable/oc-mirror.rhel9.tar.gz -O oc-mirror.tar.gz
+	tar -xzf oc-mirror.tar.gz oc-mirror
+	rm oc-mirror.tar.gz
+
+# Cosign
+get-cosign:
+	wget https://github.com/sigstore/cosign/releases/download/v3.0.4/cosign-linux-$(BINARY_ARCH) -O cosign
+	chmod +x cosign
+
+get-deps: get-direnv get-openshift-install-418 get-openshift-install-419 get-openshift-install-420 get-oc get-oc-mirror get-gomplate get-cosign
 
 
 dev:
-	go install github.com/hairyhenderson/gomplate/v3/cmd/gomplate@latest
+	go install github.com/hairyhenderson/gomplate/v4/cmd/gomplate@latest
 
 toml:
 	gomplate -f config.toml.tmpl -o config.toml

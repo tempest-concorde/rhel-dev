@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## v0.4.1 (2026-01-07)
+
+### Fix
+
+* fix: add security details (#8)
+
+Signed-off-by: Chris Butler &lt;chris.butler@redhat.com&gt; ([`e903a03`](https://github.com/tempest-concorde/rhel-dev-arm/commit/e903a038102a04341c4515e52725f264d3faf250))
+
 ## v0.4.0 (2026-01-07)
 
 ### Feature
