@@ -15,7 +15,7 @@ OCP_VERSIONS := $(shell seq $(OCP_VERSION_MIN) $(OCP_VERSION_MAX))
 
 define ocp-install-target
 get-openshift-install-4$(1):
-	wget https://mirror.openshift.com/pub/openshift-v4/$$(UNAME_ARCH)/clients/ocp/stable-4.$(1)/openshift-install-linux.tar.gz -O openshift-install-4$(1).tar.gz
+	wget https://mirror.openshift.com/pub/openshift-v4/multi/clients/ocp/stable-4.$(1)/$$(BINARY_ARCH)/openshift-install-linux.tar.gz -O openshift-install-4$(1).tar.gz
 	tar -xzf openshift-install-4$(1).tar.gz openshift-install
 	mv openshift-install openshift-install-4$(1)
 	rm openshift-install-4$(1).tar.gz

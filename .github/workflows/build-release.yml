@@ -245,8 +245,8 @@ jobs:
         SYFT_FILE_METADATA_SELECTION: "none"
       with:
         image: ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}@${{ needs.merge.outputs.digest }}
-        format: spdx-json
-        output-file: sbom.spdx.json
+        format: cyclonedx-json
+        output-file: sbom.cdx.json
 
     - name: Attest build provenance
       uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be # v2.4.0
@@ -260,7 +260,7 @@ jobs:
       with:
         subject-name: ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}
         subject-digest: ${{ needs.merge.outputs.digest }}
-        sbom-path: sbom.spdx.json
+        sbom-path: sbom.cdx.json
         push-to-registry: true
 
     - name: Run Trivy vulnerability scanner
