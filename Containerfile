@@ -24,6 +24,20 @@ RUN dnf install -y \
     yq && \
     dnf clean all
 
+# Bastion infrastructure services
+RUN dnf install -y \
+    bash-completion \
+    chrony \
+    dnsmasq \
+    firewalld \
+    jq \
+    python3-cryptography \
+    python3-firewall && \
+    dnf clean all
+
+# Python packages for Ansible modules (htpasswd support)
+RUN pip3 install passlib
+
 COPY direnv /usr/local/bin/direnv
 RUN chmod +x /usr/local/bin/direnv
 
@@ -58,5 +72,11 @@ RUN chmod +x /usr/local/bin/cosign
 # ArgoCD CLI
 COPY argocd /usr/local/bin/argocd
 RUN chmod +x /usr/local/bin/argocd
+
+# Bash completions for OCP tools
+RUN mkdir -p /etc/bash_completion.d && \
+    /usr/local/bin/oc completion bash > /etc/bash_completion.d/oc && \
+    /usr/local/bin/kubectl completion bash > /etc/bash_completion.d/kubectl && \
+    /usr/local/bin/argocd completion bash > /etc/bash_completion.d/argocd
 
 RUN bootc container lint
