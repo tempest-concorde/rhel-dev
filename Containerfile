@@ -73,6 +73,10 @@ RUN chmod +x /usr/local/bin/cosign
 COPY argocd /usr/local/bin/argocd
 RUN chmod +x /usr/local/bin/argocd
 
+# Sudoers NOPASSWD for cloud-user (default VM provisioning user)
+RUN echo "cloud-user ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/cloud-user && \
+    chmod 440 /etc/sudoers.d/cloud-user
+
 # Bash completions for OCP tools
 RUN mkdir -p /etc/bash_completion.d && \
     /usr/local/bin/oc completion bash > /etc/bash_completion.d/oc && \
