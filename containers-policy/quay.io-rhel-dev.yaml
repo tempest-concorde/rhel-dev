@@ -1,0 +1,3 @@
+docker:
+  quay.io/rh-ee-chbutler/rhel-dev:
+    use-sigstore-attachments: true
