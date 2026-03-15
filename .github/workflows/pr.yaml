@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - main
+
+permissions: read-all
+
 env:
   REGISTRY_USER: rh-ee-chbutler
   IMAGE_REGISTRY: quay.io
