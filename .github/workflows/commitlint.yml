@@ -8,6 +8,9 @@ on:
       - synchronize
     branches:
       - 'main'
+
+permissions: read-all
+
 jobs:
   lint:
     permissions:

@@ -10,6 +10,8 @@ env:
   IMAGE_REGISTRY: quay.io
   IMAGE: rhel-dev
 
+permissions: read-all
+
 jobs:
   build:
     name: Build ${{ matrix.platform }}
@@ -89,8 +91,6 @@ jobs:
     needs: build
     permissions:
       contents: write
-      packages: write
-      id-token: write
 
     steps:
     - name: Harden runner
