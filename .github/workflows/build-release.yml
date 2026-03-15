@@ -162,6 +162,15 @@ jobs:
         registry: ${{ env.IMAGE_REGISTRY }}
         auth_file_path: /run/containers/0/auth.json
 
+    - name: Checkout repository
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+    - name: Verify Rekor public key matches upstream
+      run: |
+        curl -sL https://rekor.sigstore.dev/api/v1/log/publicKey -o /tmp/rekor-live.pub
+        diff containers-policy/rekor.pub /tmp/rekor-live.pub \
+          || (echo "ERROR: containers-policy/rekor.pub does not match the live Rekor public key" && exit 1)
+
     - name: Create and push manifest
       run: |
         IMAGE_URI="${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}"
@@ -202,6 +211,14 @@ jobs:
           -a sha=${{ github.sha }} \
           -a run_id=${{ github.run_id }} \
           -a run_attempt="$GITHUB_RUN_ATTEMPT" \
+          ${IMAGE_URI}:prod
+
+    - name: Verify image signature
+      run: |
+        IMAGE_URI="${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}"
+        cosign verify \
+          --certificate-identity-regexp="https://github.com/tempest-concorde/rhel-dev/.github/workflows/build-release.yml@.*" \
+          --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
           ${IMAGE_URI}:prod
 
     - name: Get manifest digest

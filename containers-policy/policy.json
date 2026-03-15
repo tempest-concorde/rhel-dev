@@ -1,0 +1,26 @@
+{
+  "default": [
+    {
+      "type": "insecureAcceptAnything"
+    }
+  ],
+  "transports": {
+    "docker": {
+      "quay.io/rh-ee-chbutler/rhel-dev": [
+        {
+          "type": "sigstoreSigned",
+          "fulcio": {
+            "caPath": "/etc/pki/tls/certs/ca-bundle.crt",
+            "oidcIssuer": "https://token.actions.githubusercontent.com",
+            "subjectEmail": "",
+            "subjectRegexp": "https://github.com/tempest-concorde/rhel-dev/.github/workflows/build-release.yml@.*"
+          },
+          "rekorPublicKeyPath": "/etc/pki/sigstore/rekor.pub",
+          "signedIdentity": {
+            "type": "matchRepository"
+          }
+        }
+      ]
+    }
+  }
+}

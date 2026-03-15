@@ -83,4 +83,11 @@ RUN mkdir -p /etc/bash_completion.d && \
     /usr/local/bin/kubectl completion bash > /etc/bash_completion.d/kubectl && \
     /usr/local/bin/argocd completion bash > /etc/bash_completion.d/argocd
 
+# Sigstore Rekor public key (public good instance)
+COPY containers-policy/rekor.pub /etc/pki/sigstore/rekor.pub
+
+# Container image signature verification policy
+COPY containers-policy/policy.json /etc/containers/policy.json
+COPY containers-policy/quay.io-rhel-dev.yaml /etc/containers/registries.d/quay.io-rhel-dev.yaml
+
 RUN bootc container lint

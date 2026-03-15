@@ -1,0 +1,26 @@
+name: Verify Rekor public key
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  verify-rekor-key:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+    - name: Harden runner
+      uses: step-security/harden-runner@5ef0c079ce82195b2a36a210272d6b661572d83e # v2.14.2
+      with:
+        egress-policy: audit
+
+    - name: Checkout code
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+    - name: Verify Rekor public key matches upstream
+      run: |
+        curl -sL https://rekor.sigstore.dev/api/v1/log/publicKey -o /tmp/rekor-live.pub
+        diff containers-policy/rekor.pub /tmp/rekor-live.pub \
+          || (echo "ERROR: containers-policy/rekor.pub does not match the live Rekor public key" && exit 1)
