@@ -10,7 +10,7 @@ updates:
     schedule:
       interval: "daily"
     commit-message:
-      prefix: fix
+      prefix: chore
       include: scope
   - package-ecosystem: "docker"
     # Look for the Dockerfile or Containerfile in the root directory
@@ -19,5 +19,5 @@ updates:
     schedule:
       interval: "daily"
     commit-message:
-      prefix: fix
+      prefix: chore
       include: scope
