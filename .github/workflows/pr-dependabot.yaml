@@ -1,11 +1,9 @@
-name: Build bootc container based on pr to latest
+name: Build bootc container for dependabot PRs
 
 on:
-  pull_request:
+  pull_request_target:
     branches:
       - main
-
-# Dependabot PRs use pr-dependabot.yaml which has secret access via pull_request_target
 
 permissions: read-all
 
@@ -16,7 +14,7 @@ env:
 
 jobs:
   build:
-    if: github.actor != 'dependabot[bot]'
+    if: github.actor == 'dependabot[bot]'
     name: Build ${{ matrix.platform }}
     strategy:
       fail-fast: false
@@ -44,6 +42,8 @@ jobs:
 
     - name: Checkout repository
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
 
     - name: Access a subscription via activation key
       env:
