@@ -82,12 +82,15 @@ jobs:
 
     - name: Build Image
       id: build-image
-      uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
-      with:
-        image: ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}
-        tags: ${{ env.PLATFORM_PAIR }}-${{ github.sha }}
-        containerfiles: |
-          ./Containerfile
+      env:
+        IMA_PRIVATE_KEY: ${{ secrets.IMA_PRIVATE_KEY }}
+      run: |
+        printf '%s' "$IMA_PRIVATE_KEY" > /tmp/ima-private.pem
+        buildah build \
+          --tag ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }} \
+          --secret id=ima_private_key,src=/tmp/ima-private.pem \
+          -f ./Containerfile .
+        rm -f /tmp/ima-private.pem
 
     - name: Push image by digest
       id: push
@@ -130,7 +133,6 @@ jobs:
     permissions:
       contents: read
       packages: read
-      id-token: write
     steps:
     - name: Get container tools
       run: dnf -y install podman buildah skopeo jq diffutils
@@ -166,12 +168,6 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
-    - name: Verify Rekor public key matches upstream
-      run: |
-        curl -sL https://rekor.sigstore.dev/api/v1/log/publicKey -o /tmp/rekor-live.pub
-        diff containers-policy/rekor.pub /tmp/rekor-live.pub \
-          || (echo "ERROR: containers-policy/rekor.pub does not match the live Rekor public key" && exit 1)
-
     - name: Create and push manifest
       run: |
         IMAGE_URI="${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}"
@@ -200,11 +196,15 @@ jobs:
       uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # v4.1.0
 
     - name: Sign image recursively
+      env:
+        COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+        COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
       run: |
         IMAGE_URI="${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}"
         VERSION="${{ steps.parse_version.outputs.VERSION }}"
 
         cosign sign --yes --recursive \
+          --key env://COSIGN_PRIVATE_KEY \
           -a tag=$VERSION \
           -a tag=prod \
           -a tag=latest \
@@ -218,8 +218,7 @@ jobs:
       run: |
         IMAGE_URI="${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}"
         cosign verify \
-          --certificate-identity-regexp="https://github.com/tempest-concorde/rhel-dev/.github/workflows/build-release.yml@.*" \
-          --certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+          --key containers-policy/cosign.pub \
           ${IMAGE_URI}:prod
 
     - name: Get manifest digest

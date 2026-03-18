@@ -72,8 +72,7 @@ get-deps: get-direnv $(OCP_TARGETS) get-oc get-oc-mirror get-gomplate get-cosign
 
 verify:
 	cosign verify \
-		--certificate-identity-regexp="https://github.com/tempest-concorde/rhel-dev/.github/workflows/build-release.yml@.*" \
-		--certificate-oidc-issuer="https://token.actions.githubusercontent.com" \
+		--key containers-policy/cosign.pub \
 		quay.io/rh-ee-chbutler/rhel-dev:prod
 
 dev:

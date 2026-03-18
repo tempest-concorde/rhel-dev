@@ -1,0 +1,4 @@
+REPLACE THIS FILE with your IMA X.509 DER certificate.
+Generate with:
+  openssl genrsa -out ima-private.pem 2048
+  openssl req -new -x509 -key ima-private.pem -out ima-cert.der -outform DER -days 3650 -subj "/CN=rhel-dev IMA signing key"

@@ -8,7 +8,8 @@ Do NOT presume this is security maintained. It's meant for a single user. The bi
 
 This project follows container supply chain security best practices:
 
-- **Signed images**: All released container images are signed with [cosign](https://github.com/sigstore/cosign) using keyless OIDC (Sigstore).
+- **Signed images**: All released container images are signed with [cosign](https://github.com/sigstore/cosign) using key-based signing. The public key is committed at `containers-policy/cosign.pub`.
+- **IMA file integrity**: Policy files (`policy.json`, `cosign.pub`, registry config, IMA policy) are signed with IMA (`evmctl ima_sign`) at build time. In enforce mode, the kernel denies access to files with invalid IMA signatures, preventing local tampering on the writable `/etc` filesystem.
 - **Build provenance**: SLSA build provenance attestations are generated and pushed to the container registry.
 - **SBOM**: SPDX Software Bill of Materials is generated and attested for each release.
 - **Vulnerability scanning**: Images are scanned with [Trivy](https://github.com/aquasecurity/trivy) on each release; results are uploaded to GitHub Security.
