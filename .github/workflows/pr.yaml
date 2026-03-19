@@ -69,12 +69,15 @@ jobs:
 
     - name: Build Image
       id: build-image
-      uses: redhat-actions/buildah-build@7a95fa7ee0f02d552a32753e7414641a04307056 # v2
-      with:
-        image: ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}
-        tags: ${{ env.PLATFORM_PAIR }}-${{ github.sha }}
-        containerfiles: |
-          ./Containerfile
+      env:
+        IMA_PRIVATE_KEY: ${{ secrets.IMA_PRIVATE_KEY }}
+      run: |
+        printf '%s' "$IMA_PRIVATE_KEY" > /tmp/ima-private.pem
+        buildah build \
+          --tag ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }} \
+          --secret id=ima_private_key,src=/tmp/ima-private.pem \
+          -f ./Containerfile .
+        rm -f /tmp/ima-private.pem
 
     - name: Validate image
       run: |
