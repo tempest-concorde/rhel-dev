@@ -91,7 +91,10 @@ jobs:
           --tag ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }} \
           --secret id=ima_private_key,src=/tmp/ima-private.pem \
           -f ./Containerfile .
-        rm -f /tmp/ima-private.pem
+
+    - name: Clean up IMA signing key
+      if: always()
+      run: rm -f /tmp/ima-private.pem
 
     - name: Push image by digest
       id: push
@@ -136,7 +139,7 @@ jobs:
       packages: read
     steps:
     - name: Get container tools
-      run: dnf -y install podman buildah skopeo jq diffutils
+      run: dnf -y install podman buildah skopeo jq diffutils gettext
 
     - name: Download digests
       uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
