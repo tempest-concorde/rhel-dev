@@ -78,7 +78,10 @@ jobs:
           --tag ${{ env.IMAGE_REGISTRY }}/${{ env.REGISTRY_USER }}/${{ env.IMAGE }}:${{ env.PLATFORM_PAIR }}-${{ github.sha }} \
           --secret id=ima_private_key,src=/tmp/ima-private.pem \
           -f ./Containerfile .
-        rm -f /tmp/ima-private.pem
+
+    - name: Clean up IMA signing key
+      if: always()
+      run: rm -f /tmp/ima-private.pem
 
     - name: Validate image
       run: |
