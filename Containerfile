@@ -83,11 +83,39 @@ RUN mkdir -p /etc/bash_completion.d && \
     /usr/local/bin/kubectl completion bash > /etc/bash_completion.d/kubectl && \
     /usr/local/bin/argocd completion bash > /etc/bash_completion.d/argocd
 
-# Sigstore Rekor public key (public good instance)
-COPY containers-policy/rekor.pub /etc/pki/sigstore/rekor.pub
+# IMA tools
+RUN dnf install -y ima-evm-utils && dnf clean all
+
+# Cosign public key for image signature verification
+COPY containers-policy/cosign.pub /etc/pki/sigstore/cosign.pub
 
 # Container image signature verification policy
 COPY containers-policy/policy.json /etc/containers/policy.json
 COPY containers-policy/quay.io-rhel-dev.yaml /etc/containers/registries.d/quay.io-rhel-dev.yaml
+
+# IMA public key certificate (loaded onto .ima keyring at boot by dracut)
+RUN mkdir -p /etc/keys/ima
+COPY ima/ima-cert.der /etc/keys/ima/ima-cert.der
+
+# Custom IMA appraisal policy (appraise only files with IMA signatures)
+RUN mkdir -p /etc/ima
+COPY ima/ima-appraise-signed.policy /etc/ima/ima-policy
+
+# IMA sign policy files (private key from build secret)
+RUN --mount=type=secret,id=ima_private_key \
+    evmctl ima_sign --key /run/secrets/ima_private_key /etc/containers/policy.json && \
+    evmctl ima_sign --key /run/secrets/ima_private_key /etc/pki/sigstore/cosign.pub && \
+    evmctl ima_sign --key /run/secrets/ima_private_key /etc/containers/registries.d/quay.io-rhel-dev.yaml && \
+    evmctl ima_sign --key /run/secrets/ima_private_key /etc/ima/ima-policy
+
+# Dracut: include integrity module for IMA key loading at boot
+COPY dracut/50-integrity.conf /usr/lib/dracut/dracut.conf.d/50-integrity.conf
+
+# Kernel args for IMA and SELinux enforcement
+RUN mkdir -p /usr/lib/bootc/kargs.d
+COPY kargs.d/ /usr/lib/bootc/kargs.d/
+
+# Regenerate initramfs with integrity module
+RUN set -x; kver=$(cd /usr/lib/modules && echo *); dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
 
 RUN bootc container lint
