@@ -30,7 +30,24 @@ Base: `registry.redhat.io/rhel10/rhel-bootc`
      IMAGE_REGISTRY: quay.io
    ```
 
-1. **Set up GitHub Actions secrets** for your registry: `REGISTRY_USER`, `REGISTRY_PASSWORD`, `RH_REGISTRY_USER`, `RH_REGISTRY_PASSWORD`.
+1. **Set up GitHub Actions secrets** for your registry:
+   - `REGISTRY_USER`, `REGISTRY_PASSWORD` — your OCI registry credentials
+   - `RH_REGISTRY_USER`, `RH_REGISTRY_PASSWORD` — Red Hat registry credentials
+   - `RHT_ORGID`, `RHT_ACT_KEY` — Red Hat subscription activation key
+   - `COSIGN_PRIVATE_KEY`, `COSIGN_PASSWORD` — cosign signing key (see below)
+   - `IMA_PRIVATE_KEY` — IMA signing key (see below)
+   - `FG_PAT` — GitHub PAT for semantic release
+
+1. **Generate signing keys**:
+   - **Cosign**: `cosign generate-key-pair` — commit `cosign.pub` to `containers-policy/`, add `COSIGN_PRIVATE_KEY` and `COSIGN_PASSWORD` as secrets
+   - **IMA**: Generate RSA key and X.509 cert:
+     ```shell
+     openssl genrsa -out ima-private.pem 2048
+     openssl req -new -x509 -key ima-private.pem -out ima/ima-cert.der -outform DER -days 3650 -subj "/CN=your-project IMA signing key"
+     ```
+     Commit `ima/ima-cert.der`, add the contents of `ima-private.pem` as `IMA_PRIVATE_KEY` secret
+
+1. **Update signing policy** — in `containers-policy/policy.json` and `containers-policy/quay.io-rhel-dev.yaml`, replace the registry path with your own.
 
 1. **Customize the `Containerfile`** — add or remove packages and tools.
 
@@ -96,19 +113,6 @@ For ISO installs with console access:
 3. After enrollment, verify with `mokutil --test-key /etc/keys/ima/ima-cert.der`
 
 For headless/cloud deployments: MOK enrollment requires console access. Either arrange console access or disable Secure Boot.
-
-### Fork instructions
-
-If you fork this project, you need your own signing keys:
-
-1. **Cosign keypair**: `cosign generate-key-pair` — commit `cosign.pub` to `containers-policy/`, add `COSIGN_PRIVATE_KEY` and `COSIGN_PASSWORD` as GitHub Actions secrets
-2. **IMA keypair**: Generate RSA key and X.509 cert:
-   ```shell
-   openssl genrsa -out ima-private.pem 2048
-   openssl req -new -x509 -key ima-private.pem -out ima/ima-cert.der -outform DER -days 3650 -subj "/CN=your-project IMA signing key"
-   ```
-   Commit `ima/ima-cert.der`, add `IMA_PRIVATE_KEY` (contents of `ima-private.pem`) as a GitHub Actions secret
-3. Update `policy.json` and `quay.io-rhel-dev.yaml` with your registry path
 
 ## Notes
 
