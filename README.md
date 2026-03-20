@@ -35,17 +35,10 @@ Base: `registry.redhat.io/rhel10/rhel-bootc`
    - `RH_REGISTRY_USER`, `RH_REGISTRY_PASSWORD` — Red Hat registry credentials
    - `RHT_ORGID`, `RHT_ACT_KEY` — Red Hat subscription activation key
    - `COSIGN_PRIVATE_KEY`, `COSIGN_PASSWORD` — cosign signing key (see below)
-   - `IMA_PRIVATE_KEY` — IMA signing key (see below)
    - `FG_PAT` — GitHub PAT for semantic release
 
 1. **Generate signing keys**:
    - **Cosign**: `cosign generate-key-pair` — commit `cosign.pub` to `containers-policy/`, add `COSIGN_PRIVATE_KEY` and `COSIGN_PASSWORD` as secrets
-   - **IMA**: Generate RSA key and X.509 cert:
-     ```shell
-     openssl genrsa -out ima-private.pem 2048
-     openssl req -new -x509 -key ima-private.pem -out ima/ima-cert.der -outform DER -days 3650 -subj "/CN=your-project IMA signing key"
-     ```
-     Commit `ima/ima-cert.der`, add the contents of `ima-private.pem` as `IMA_PRIVATE_KEY` secret
 
 1. **Update signing policy** — in `containers-policy/policy.json` and `containers-policy/quay.io-rhel-dev.yaml`, replace the registry path with your own.
 
@@ -97,22 +90,26 @@ Released images are signed with [cosign](https://github.com/sigstore/cosign) usi
 make verify
 ```
 
-### IMA file integrity enforcement
+### SELinux policy lockdown
 
-Policy files in the image (`/etc/containers/policy.json`, `/etc/pki/sigstore/cosign.pub`, registry config, `/etc/ima/ima-policy`) are signed at build time with IMA (`evmctl ima_sign`). With `ima_appraise=enforce` in the kernel args, the kernel denies access to any file whose IMA signature is invalid. This prevents local modification of the container signing policy on the writable `/etc` filesystem.
+Container signing policy (`/etc/containers/policy.json`) is protected by a custom SELinux type (`secure_container_policy_t`) that denies write access to all domains including root. Trust assets (cosign public key, registry config) are placed in read-only `/usr/share/` paths where bootc/ostree prevents modification.
 
-The IMA appraisal policy (`appraise fowner=0 appraise_type=imasig`) only enforces files that have IMA signatures — unsigned files are unaffected.
+At boot, a systemd oneshot service sets `secure_mode_policyload=1`, which prevents loading new SELinux policy modules or changing SELinux booleans/mode. Kernel args `selinux=1 enforcing=1` are set via `/usr/lib/bootc/kargs.d/` (read-only `/usr`).
 
-### MOK enrollment (ISO installs)
+### Optional GRUB password (experimental)
 
-The IMA public key certificate must be enrolled in MOK (Machine Owner Key) so dracut can load it onto the kernel `.ima` keyring at boot.
+To prevent `selinux=0` kernel argument tampering at the GRUB menu, set a GRUB password before building the ISO:
 
-For ISO installs with console access:
-1. Set `export ENROLL_IMA_MOK=true` before `make iso`
-2. On first reboot after install, MokManager appears — use root password to enroll the IMA key
-3. After enrollment, verify with `mokutil --test-key /etc/keys/ima/ima-cert.der`
+```shell
+# Generate a PBKDF2 password hash
+grub2-mkpasswd-pbkdf2
 
-For headless/cloud deployments: MOK enrollment requires console access. Either arrange console access or disable Secure Boot.
+# Set the hash before building
+export GRUB_PASSWORD_HASH='grub.pbkdf2.sha512.10000.…'
+make iso
+```
+
+This uses `grub2-setpassword` in the kickstart `%post`. Since bootupd manages `/boot`, this may be fragile across `bootc upgrade`.
 
 ## Notes
 
