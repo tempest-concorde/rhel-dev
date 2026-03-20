@@ -81,7 +81,7 @@ dev:
 toml:
 	gomplate -f config.toml.tmpl -o config.toml
 
-iso: toml get-deps
+iso: toml
 	rm -rf output
 	mkdir output
 	podman pull quay.io/rh-ee-chbutler/rhel-dev:latest
@@ -89,7 +89,7 @@ iso: toml get-deps
 	podman run --rm -it --privileged --pull=newer --security-opt label=type:unconfined_t -v /var/lib/containers/storage:/var/lib/containers/storage -v $(CURDIR)/config.toml:/config.toml -v $(CURDIR)/output:/output registry.redhat.io/rhel10/bootc-image-builder:latest --type iso quay.io/rh-ee-chbutler/rhel-dev:latest
 
 
-qcow: toml get-deps
+qcow: toml
 	rm -rf output
 	mkdir output
 	podman pull quay.io/rh-ee-chbutler/rhel-dev:latest

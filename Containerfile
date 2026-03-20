@@ -83,39 +83,34 @@ RUN mkdir -p /etc/bash_completion.d && \
     /usr/local/bin/kubectl completion bash > /etc/bash_completion.d/kubectl && \
     /usr/local/bin/argocd completion bash > /etc/bash_completion.d/argocd
 
-# IMA tools
-RUN dnf install -y ima-evm-utils && dnf clean all
+# SELinux policy development tools (compile module, then remove)
+RUN dnf install -y selinux-policy-devel && dnf clean all
 
-# Cosign public key for image signature verification
-COPY containers-policy/cosign.pub /etc/pki/sigstore/cosign.pub
+# Trust assets in /usr (read-only on bootc)
+RUN mkdir -p /usr/share/pki/sigstore
+COPY containers-policy/cosign.pub /usr/share/pki/sigstore/cosign.pub
+RUN mkdir -p /usr/share/containers/registries.d
+COPY containers-policy/quay.io-rhel-dev.yaml /usr/share/containers/registries.d/quay.io-rhel-dev.yaml
 
-# Container image signature verification policy
+# Container image signature verification policy (protected by SELinux)
 COPY containers-policy/policy.json /etc/containers/policy.json
-COPY containers-policy/quay.io-rhel-dev.yaml /etc/containers/registries.d/quay.io-rhel-dev.yaml
 
-# IMA public key certificate (loaded onto .ima keyring at boot by dracut)
-RUN mkdir -p /etc/keys/ima
-COPY ima/ima-cert.der /etc/keys/ima/ima-cert.der
+# Compile and install custom SELinux policy module
+COPY selinux/container_lockdown.te selinux/container_lockdown.fc /tmp/selinux/
+RUN cd /tmp/selinux && \
+    make -f /usr/share/selinux/devel/Makefile container_lockdown.pp && \
+    semodule -i container_lockdown.pp && \
+    rm -rf /tmp/selinux
 
-# Custom IMA appraisal policy (appraise only files with IMA signatures)
-RUN mkdir -p /etc/ima
-COPY ima/ima-appraise-signed.policy /etc/ima/ima-policy
+# Restore file contexts for protected files
+RUN restorecon -v /etc/containers/policy.json /etc/selinux/config
 
-# IMA sign policy files (private key from build secret)
-RUN --mount=type=secret,id=ima_private_key \
-    evmctl ima_sign --key /run/secrets/ima_private_key /etc/containers/policy.json && \
-    evmctl ima_sign --key /run/secrets/ima_private_key /etc/pki/sigstore/cosign.pub && \
-    evmctl ima_sign --key /run/secrets/ima_private_key /etc/containers/registries.d/quay.io-rhel-dev.yaml && \
-    evmctl ima_sign --key /run/secrets/ima_private_key /etc/ima/ima-policy
+# SELinux lockdown service (sets secure_mode_policyload=1 early in boot)
+COPY selinux/selinux-lockdown.service /usr/lib/systemd/system/selinux-lockdown.service
+RUN systemctl enable selinux-lockdown.service
 
-# Dracut: include integrity module for IMA key loading at boot
-COPY dracut/50-integrity.conf /usr/lib/dracut/dracut.conf.d/50-integrity.conf
-
-# Kernel args for IMA and SELinux enforcement
+# Kernel args for SELinux enforcement (read-only /usr on bootc)
 RUN mkdir -p /usr/lib/bootc/kargs.d
-COPY kargs.d/ /usr/lib/bootc/kargs.d/
-
-# Regenerate initramfs with integrity module
-RUN set -x; kver=$(cd /usr/lib/modules && echo *); dracut -vf /usr/lib/modules/$kver/initramfs.img $kver
+COPY kargs.d/01-selinux.toml /usr/lib/bootc/kargs.d/01-selinux.toml
 
 RUN bootc container lint

@@ -27,10 +27,10 @@ cat > /etc/ostree/auth.json << 'EOF'
 {{ file.Read (env.Getenv "DOCKER_AUTH_PATH") }}
 EOF
 
-{{ if env.Getenv "ENROLL_IMA_MOK" }}
-# Queue IMA signing key for MOK enrollment
-# On next reboot, MokManager will prompt - use root password to confirm
-mokutil --import /etc/keys/ima/ima-cert.der --root-pw
+{{ if env.Getenv "GRUB_PASSWORD_HASH" }}
+# GRUB password protection (experimental)
+# Prevents kernel arg tampering (selinux=0, enforcing=0) at boot menu
+grub2-setpassword --password-hash '{{ env.Getenv "GRUB_PASSWORD_HASH" }}'
 {{ end }}
 
 %end

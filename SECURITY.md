@@ -9,7 +9,8 @@ Do NOT presume this is security maintained. It's meant for a single user. The bi
 This project follows container supply chain security best practices:
 
 - **Signed images**: All released container images are signed with [cosign](https://github.com/sigstore/cosign) using key-based signing. The public key is committed at `containers-policy/cosign.pub`.
-- **IMA file integrity**: Policy files (`policy.json`, `cosign.pub`, registry config, IMA policy) are signed with IMA (`evmctl ima_sign`) at build time. In enforce mode, the kernel denies access to files with invalid IMA signatures, preventing local tampering on the writable `/etc` filesystem.
+- **SELinux policy lockdown**: Container signing policy (`policy.json`) is protected by a custom SELinux type (`secure_container_policy_t`) that denies write access to all domains including root. `secure_mode_policyload` is set at boot to prevent policy module changes or mode switching. Trust assets (cosign public key, registry config) are placed in read-only `/usr`.
+- **Optional GRUB protection**: Bootloader can be password-protected at install time to prevent `selinux=0` kernel argument tampering. Set `GRUB_PASSWORD_HASH` before `make iso`.
 - **Build provenance**: SLSA build provenance attestations are generated and pushed to the container registry.
 - **SBOM**: SPDX Software Bill of Materials is generated and attested for each release.
 - **Vulnerability scanning**: Images are scanned with [Trivy](https://github.com/aquasecurity/trivy) on each release; results are uploaded to GitHub Security.

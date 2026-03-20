@@ -9,7 +9,7 @@
       "quay.io/rh-ee-chbutler/rhel-dev": [
         {
           "type": "sigstoreSigned",
-          "keyPath": "/etc/pki/sigstore/cosign.pub",
+          "keyPath": "/usr/share/pki/sigstore/cosign.pub",
           "signedIdentity": {
             "type": "matchRepository"
           }
