@@ -1,42 +1,49 @@
 FROM registry.redhat.io/rhel10/rhel-bootc@sha256:612eebb0ad918e2dd2e265e2cb9f6d75e684471600711ea615752e6c41130140
 
-RUN dnf group install -y "Minimal Install" && dnf clean all
-RUN dnf config-manager --add-repo https://pkgs.tailscale.com/stable/centos/10/tailscale.repo
-RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
-
-RUN dnf install -y \
-    butane \
-    coreos-installer \
-    git \
-    go \
-    java-21-openjdk \
-    java-21-openjdk-devel \
-    make \
-    maven \
-    podman \
-    python3 \
-    python3-pip \
-    qemu-guest-agent \
-    skopeo \
-    tailscale \
-    vim \
-    vim-enhanced \
-    yq && \
+# Consolidated package install: repos + all packages
+RUN dnf group install -y "Minimal Install" && \
+    dnf config-manager --add-repo https://pkgs.tailscale.com/stable/centos/10/tailscale.repo && \
+    dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm && \
+    dnf install -y \
+        bash-completion \
+        butane \
+        chrony \
+        coreos-installer \
+        dnsmasq \
+        firewalld \
+        git \
+        go \
+        java-21-openjdk \
+        java-21-openjdk-devel \
+        jq \
+        make \
+        maven \
+        podman \
+        python3 \
+        python3-cryptography \
+        python3-firewall \
+        python3-passlib \
+        qemu-guest-agent \
+        skopeo \
+        tailscale \
+        vim \
+        vim-enhanced \
+        yq && \
+    dnf config-manager --set-disabled epel && \
     dnf clean all
 
-# Bastion infrastructure services
-RUN dnf install -y \
-    bash-completion \
-    chrony \
-    dnsmasq \
-    firewalld \
-    jq \
-    python3-cryptography \
-    python3-firewall && \
+# Apply CIS baseline hardening (remediate then override with our customizations)
+RUN dnf install -y openscap-scanner scap-security-guide && \
+    oscap xccdf eval --remediate \
+        --profile xccdf_org.ssgproject.content_profile_cis \
+        /usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml ; \
     dnf clean all
 
-# Python packages for Ansible modules (htpasswd support)
-RUN pip3 install passlib
+# DEFAULT crypto policy includes PQC (ML-KEM, ML-DSA) in RHEL 10.1+
+RUN update-crypto-policies --set DEFAULT
+
+# SELinux policy development tools (compile module, then remove)
+RUN dnf install -y selinux-policy-devel && dnf clean all
 
 COPY direnv /usr/local/bin/direnv
 RUN chmod +x /usr/local/bin/direnv
@@ -83,9 +90,6 @@ RUN mkdir -p /etc/bash_completion.d && \
     /usr/local/bin/kubectl completion bash > /etc/bash_completion.d/kubectl && \
     /usr/local/bin/argocd completion bash > /etc/bash_completion.d/argocd
 
-# SELinux policy development tools (compile module, then remove)
-RUN dnf install -y selinux-policy-devel && dnf clean all
-
 # Trust assets in /usr (read-only on bootc)
 RUN mkdir -p /usr/share/pki/sigstore
 COPY containers-policy/cosign.pub /usr/share/pki/sigstore/cosign.pub
@@ -102,12 +106,12 @@ RUN cd /tmp/selinux && \
     semodule -i container_lockdown.pp && \
     rm -rf /tmp/selinux
 
+# Bake SELinux booleans into the image (persisted to on-disk policy store)
+RUN setsebool -P secure_mode_policyload 1 && \
+    setsebool -P secure_mode_insmod 1
+
 # Restore file contexts for protected files
 RUN restorecon -v /etc/containers/policy.json /etc/selinux/config
-
-# SELinux lockdown service (sets secure_mode_policyload=1 early in boot)
-COPY selinux/selinux-lockdown.service /usr/lib/systemd/system/selinux-lockdown.service
-RUN systemctl enable selinux-lockdown.service
 
 # Kernel args for SELinux enforcement (read-only /usr on bootc)
 RUN mkdir -p /usr/lib/bootc/kargs.d
