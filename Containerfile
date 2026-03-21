@@ -107,8 +107,8 @@ RUN cd /tmp/selinux && \
     rm -rf /tmp/selinux
 
 # Bake SELinux booleans into the image (persisted to on-disk policy store)
-RUN setsebool -P secure_mode_policyload 1 && \
-    setsebool -P secure_mode_insmod 1
+RUN semanage boolean -m --on secure_mode_policyload && \
+    semanage boolean -m --on secure_mode_insmod
 
 # Restore file contexts for protected files
 RUN restorecon -v /etc/containers/policy.json /etc/selinux/config
