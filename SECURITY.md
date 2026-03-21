@@ -9,7 +9,7 @@ Do NOT presume this is security maintained. It's meant for a single user. The bi
 This project follows container supply chain security best practices:
 
 - **Signed images**: All released container images are signed with [cosign](https://github.com/sigstore/cosign) using key-based signing. The public key is committed at `containers-policy/cosign.pub`.
-- **SELinux policy lockdown**: Container signing policy (`policy.json`) is protected by a custom SELinux type (`secure_container_policy_t`) that denies write access to all domains including root. `secure_mode_policyload` and `secure_mode_insmod` are baked into the image's on-disk policy store at build time. Trust assets (cosign public key, registry config) are placed in read-only `/usr`.
+- **SELinux policy lockdown**: Container signing policy (`policy.json`) is protected by a custom SELinux type (`secure_container_policy_t`) that denies write access to all domains including root. `secure_mode_policyload` and `secure_mode_insmod` are set at boot via `selinux-lockdown.service`. Trust assets (cosign public key, registry config) are placed in read-only `/usr`.
 - **Optional GRUB protection**: Bootloader can be password-protected at install time to prevent `selinux=0` kernel argument tampering. Set `GRUB_PASSWORD_HASH` before `make iso`.
 - **Build provenance**: SLSA build provenance attestations are generated and pushed to the container registry.
 - **SBOM**: SPDX Software Bill of Materials is generated and attested for each release.
@@ -71,7 +71,8 @@ SELinux is enforced via multiple mechanisms:
 
 - **Kernel args:** `enforcing=1` set via `kargs.d/01-selinux.toml`
 - **Policy booleans:** `secure_mode_policyload` and `secure_mode_insmod` are
-  baked into the image's on-disk policy store at build time
+  set at boot via `selinux-lockdown.service` (cannot be baked at build time
+  due to container build environment limitations)
 - **Custom policy module:** `container_lockdown.pp` protects
   `/etc/containers/policy.json` from runtime modification
 

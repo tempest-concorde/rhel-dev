@@ -106,9 +106,9 @@ RUN cd /tmp/selinux && \
     semodule -i container_lockdown.pp && \
     rm -rf /tmp/selinux
 
-# Bake SELinux booleans into the image (persisted to on-disk policy store)
-RUN semanage boolean -m --on secure_mode_policyload && \
-    semanage boolean -m --on secure_mode_insmod
+# SELinux lockdown service (sets secure_mode_policyload and secure_mode_insmod at boot)
+COPY selinux/selinux-lockdown.service /usr/lib/systemd/system/selinux-lockdown.service
+RUN systemctl enable selinux-lockdown.service
 
 # Restore file contexts for protected files
 RUN restorecon -v /etc/containers/policy.json /etc/selinux/config
