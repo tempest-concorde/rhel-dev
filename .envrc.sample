@@ -1,0 +1,12 @@
+# Copy to .envrc and edit, then run `direnv allow`
+# See README.md for details on each variable
+
+# Required
+export USERNAME=cloud-user
+export PASSWORD_HASH=''  # Generate with: openssl passwd -6
+export SSH_KEY_PATH=$HOME/.ssh/id_rsa.pub
+export DOCKER_AUTH_PATH=$(pwd)/docker-auth.json
+
+# Optional
+# export GRUB_PASSWORD_HASH=''  # Generate with: grub2-mkpasswd-pbkdf2
+# export NOPASSWD_SUDO=1        # Enable passwordless sudo for USERNAME
