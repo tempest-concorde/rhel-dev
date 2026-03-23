@@ -1,6 +1,6 @@
 FROM registry.redhat.io/rhel10/rhel-bootc@sha256:612eebb0ad918e2dd2e265e2cb9f6d75e684471600711ea615752e6c41130140
 
-# Consolidated package install: repos + all packages
+# Consolidated package install: repos + all packages (single dnf layer)
 RUN dnf group install -y "Minimal Install" && \
     dnf config-manager --add-repo https://pkgs.tailscale.com/stable/centos/10/tailscale.repo && \
     dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm && \
@@ -18,12 +18,15 @@ RUN dnf group install -y "Minimal Install" && \
         jq \
         make \
         maven \
+        openscap-scanner \
         podman \
         python3 \
         python3-cryptography \
         python3-firewall \
         python3-passlib \
         qemu-guest-agent \
+        scap-security-guide \
+        selinux-policy-devel \
         skopeo \
         tailscale \
         vim \
@@ -33,17 +36,14 @@ RUN dnf group install -y "Minimal Install" && \
     dnf clean all
 
 # Apply CIS baseline hardening (remediate then override with our customizations)
-RUN dnf install -y openscap-scanner scap-security-guide && \
-    oscap xccdf eval --remediate \
+# oscap returns non-zero when rules can't be applied, which is expected
+RUN oscap xccdf eval --remediate \
         --profile xccdf_org.ssgproject.content_profile_cis \
         /usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml ; \
-    dnf clean all
+    true
 
 # DEFAULT crypto policy includes PQC (ML-KEM, ML-DSA) in RHEL 10.1+
 RUN update-crypto-policies --set DEFAULT
-
-# SELinux policy development tools (compile module, then remove)
-RUN dnf install -y selinux-policy-devel && dnf clean all
 
 COPY direnv /usr/local/bin/direnv
 RUN chmod +x /usr/local/bin/direnv
@@ -111,7 +111,7 @@ COPY selinux/selinux-lockdown.service /usr/lib/systemd/system/selinux-lockdown.s
 RUN systemctl enable selinux-lockdown.service
 
 # Restore file contexts for protected files
-RUN restorecon -v /etc/containers/policy.json /etc/selinux/config
+RUN restorecon -v /etc/containers/policy.json /etc/selinux/config /usr/lib/systemd/system/selinux-lockdown.service
 
 # Kernel args for SELinux enforcement (read-only /usr on bootc)
 RUN mkdir -p /usr/lib/bootc/kargs.d
