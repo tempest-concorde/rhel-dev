@@ -37,7 +37,7 @@ jobs:
         echo "PLATFORM_PAIR=${platform//\//-}" >> $GITHUB_ENV
 
     - name: Get container tools in UBI builder
-      run: dnf -y install podman buildah skopeo make wget git
+      run: dnf -y install podman buildah skopeo make wget git jq
 
     - name: Checkout repository
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
