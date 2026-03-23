@@ -20,14 +20,12 @@ This project follows container supply chain security best practices:
 
 ## Accepted Risks
 
-### NOPASSWD sudo for cloud-user
+### NOPASSWD sudo (opt-in)
 
-`cloud-user ALL=(ALL) NOPASSWD: ALL` is intentional. This image targets
-single-user development/bastion VMs where the cloud-init provisioning user
-requires passwordless sudo for bootstrap and day-to-day administration.
-
-Consumers deploying this image in multi-user environments should restrict or
-remove `/etc/sudoers.d/cloud-user`.
+Passwordless sudo is **not** baked into the image. It can be enabled at
+install time by setting `NOPASSWD_SUDO=1` before running `make iso` or
+`make qcow`. This adds a sudoers entry for the provisioning user via the
+kickstart `%post` script. Disabled by default for CIS compliance.
 
 ## SCAP CIS Hardening
 
