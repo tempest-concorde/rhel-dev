@@ -117,6 +117,9 @@ get-argocd:
 
 get-deps: get-direnv $(OCP_TARGETS) get-oc get-oc-mirror get-gomplate get-cosign get-argocd
 
+clean:
+	rm -f direnv oc kubectl oc-mirror gomplate cosign argocd openshift-install-4*
+
 verify:
 	cosign verify \
 		--key containers-policy/cosign.pub \
