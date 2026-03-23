@@ -33,6 +33,12 @@ EOF
 grub2-setpassword --password-hash '{{ env.Getenv "GRUB_PASSWORD_HASH" }}'
 {{ end }}
 
+{{ if env.Getenv "NOPASSWD_SUDO" }}
+# Passwordless sudo for provisioning user (opt-in, set NOPASSWD_SUDO=1)
+echo "{{ env.Getenv "USERNAME" }} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/{{ env.Getenv "USERNAME" }}
+chmod 440 /etc/sudoers.d/{{ env.Getenv "USERNAME" }}
+{{ end }}
+
 %end
 
 reboot --eject
