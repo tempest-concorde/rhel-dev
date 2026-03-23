@@ -201,6 +201,7 @@ jobs:
         VERSION="${{ steps.parse_version.outputs.VERSION }}"
 
         cosign sign --yes --recursive \
+          --registry-referrers-mode=legacy \
           --key env://COSIGN_PRIVATE_KEY \
           -a tag=$VERSION \
           -a tag=prod \
