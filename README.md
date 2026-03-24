@@ -12,8 +12,8 @@ Fork this repo and point it at your own registry to build your own image.
 
 Base: `registry.redhat.io/rhel10/rhel-bootc`
 
-- **dnf packages**: Go, Java 21, Maven, podman, skopeo, butane, coreos-installer, Tailscale, yq, jq, dnsmasq, firewalld, and more
-- **CLI tools**: `oc`, `oc-mirror`, `openshift-install` (4.18–4.21), `direnv`, `gomplate`, `cosign`, `argocd`
+- **dnf packages**: Go, podman, skopeo, butane, coreos-installer, Tailscale, yq, jq, dnsmasq, firewalld, and more
+- **CLI tools**: `oc`, `oc-mirror`, `openshift-install` (4.20–4.21), `direnv`, `gomplate`, `cosign`, `argocd`
 - **Multi-arch**: amd64 and arm64 builds via CI
 
 ## Forking and adapting

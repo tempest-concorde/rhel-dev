@@ -1,6 +1,13 @@
+# Stage 1: Compile SELinux policy module
+FROM registry.redhat.io/rhel10/rhel-bootc@sha256:612eebb0ad918e2dd2e265e2cb9f6d75e684471600711ea615752e6c41130140 AS selinux-builder
+RUN dnf install -y selinux-policy-devel && dnf clean all
+COPY selinux/container_lockdown.te selinux/container_lockdown.fc /tmp/selinux/
+RUN cd /tmp/selinux && make -f /usr/share/selinux/devel/Makefile container_lockdown.pp
+
+# Stage 2: Final image
 FROM registry.redhat.io/rhel10/rhel-bootc@sha256:612eebb0ad918e2dd2e265e2cb9f6d75e684471600711ea615752e6c41130140
 
-# Consolidated package install: repos + all packages (single dnf layer)
+# Runtime packages (single dnf layer)
 RUN dnf group install -y "Minimal Install" && \
     dnf config-manager --add-repo https://pkgs.tailscale.com/stable/centos/10/tailscale.repo && \
     dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm && \
@@ -13,20 +20,14 @@ RUN dnf group install -y "Minimal Install" && \
         firewalld \
         git \
         go \
-        java-21-openjdk \
-        java-21-openjdk-devel \
         jq \
         make \
-        maven \
-        openscap-scanner \
         podman \
         python3 \
         python3-cryptography \
         python3-firewall \
         python3-passlib \
         qemu-guest-agent \
-        scap-security-guide \
-        selinux-policy-devel \
         skopeo \
         tailscale \
         vim \
@@ -35,12 +36,13 @@ RUN dnf group install -y "Minimal Install" && \
     dnf config-manager --set-disabled epel && \
     dnf clean all
 
-# Apply CIS baseline hardening (remediate then override with our customizations)
-# oscap returns non-zero when rules can't be applied, which is expected
-RUN oscap xccdf eval --remediate \
+# CIS hardening: install SCAP tools, remediate, remove (not needed at runtime)
+RUN dnf install -y openscap-scanner scap-security-guide && \
+    oscap xccdf eval --remediate \
         --profile xccdf_org.ssgproject.content_profile_cis \
         /usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml ; \
-    true
+    dnf remove -y openscap-scanner scap-security-guide && \
+    dnf clean all
 
 # DEFAULT crypto policy includes PQC (ML-KEM, ML-DSA) in RHEL 10.1+
 RUN update-crypto-policies --set DEFAULT
@@ -94,12 +96,9 @@ COPY containers-policy/quay.io-rhel-dev.yaml /etc/containers/registries.d/quay.i
 # Container image signature verification policy (protected by SELinux)
 COPY containers-policy/policy.json /etc/containers/policy.json
 
-# Compile and install custom SELinux policy module
-COPY selinux/container_lockdown.te selinux/container_lockdown.fc /tmp/selinux/
-RUN cd /tmp/selinux && \
-    make -f /usr/share/selinux/devel/Makefile container_lockdown.pp && \
-    semodule -i container_lockdown.pp && \
-    rm -rf /tmp/selinux
+# Install pre-compiled SELinux policy module from builder stage
+COPY --from=selinux-builder /tmp/selinux/container_lockdown.pp /tmp/container_lockdown.pp
+RUN semodule -i /tmp/container_lockdown.pp && rm /tmp/container_lockdown.pp
 
 # SELinux lockdown service (sets secure_mode_policyload and secure_mode_insmod at boot)
 COPY selinux/selinux-lockdown.service /usr/lib/systemd/system/selinux-lockdown.service
