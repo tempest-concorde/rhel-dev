@@ -1,12 +1,11 @@
 [Unit]
-Description=Lock SELinux policy state
+Description=Lock SELinux policy state and protect critical files
 After=multi-user.target
 
 [Service]
 Type=oneshot
-ExecStart=/usr/sbin/setsebool -P secure_mode_policyload 1
-ExecStart=/usr/sbin/setsebool -P secure_mode_insmod 1
-ExecStart=/usr/sbin/setsebool -P secure_mode 1
+ExecStart=/usr/bin/chattr +i /etc/containers/policy.json /etc/containers/registries.d/quay.io-rhel-dev.yaml
+ExecStart=/usr/sbin/setsebool -P secure_mode_policyload=1 secure_mode_insmod=1 secure_mode=1
 RemainAfterExit=yes
 
 [Install]
