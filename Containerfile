@@ -89,8 +89,7 @@ RUN mkdir -p /etc/bash_completion.d && \
 # Trust assets in /usr (read-only on bootc)
 RUN mkdir -p /usr/share/pki/sigstore
 COPY containers-policy/cosign.pub /usr/share/pki/sigstore/cosign.pub
-RUN mkdir -p /usr/share/containers/registries.d
-COPY containers-policy/quay.io-rhel-dev.yaml /usr/share/containers/registries.d/quay.io-rhel-dev.yaml
+COPY containers-policy/quay.io-rhel-dev.yaml /etc/containers/registries.d/quay.io-rhel-dev.yaml
 
 # Container image signature verification policy (protected by SELinux)
 COPY containers-policy/policy.json /etc/containers/policy.json
@@ -107,7 +106,7 @@ COPY selinux/selinux-lockdown.service /usr/lib/systemd/system/selinux-lockdown.s
 RUN systemctl enable selinux-lockdown.service
 
 # Restore file contexts for protected files
-RUN restorecon -v /etc/containers/policy.json /etc/selinux/config /usr/lib/systemd/system/selinux-lockdown.service
+RUN restorecon -v /etc/containers/policy.json /etc/selinux/config /usr/lib/systemd/system/selinux-lockdown.service /etc/containers/registries.d/quay.io-rhel-dev.yaml
 
 # Kernel args for SELinux enforcement (read-only /usr on bootc)
 RUN mkdir -p /usr/lib/bootc/kargs.d
