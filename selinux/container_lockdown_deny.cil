@@ -1,0 +1,3 @@
+; Runtime deny rules for protected files (secure_container_policy_t)
+; Unlike neverallow (compile-time only), CIL deny overrides existing allow rules
+(deny domain secure_container_policy_t (file (write append rename unlink)))

@@ -98,14 +98,16 @@ COPY containers-policy/policy.json /etc/containers/policy.json
 
 # Install pre-compiled SELinux policy module from builder stage
 COPY --from=selinux-builder /tmp/selinux/container_lockdown.pp /tmp/container_lockdown.pp
-RUN semodule -i /tmp/container_lockdown.pp && rm /tmp/container_lockdown.pp
+COPY selinux/container_lockdown_deny.cil /tmp/container_lockdown_deny.cil
+RUN semodule -i /tmp/container_lockdown.pp /tmp/container_lockdown_deny.cil && \
+    rm /tmp/container_lockdown.pp /tmp/container_lockdown_deny.cil
 
 # SELinux lockdown service (sets secure_mode_policyload and secure_mode_insmod at boot)
 COPY selinux/selinux-lockdown.service /usr/lib/systemd/system/selinux-lockdown.service
 RUN systemctl enable selinux-lockdown.service
 
 # Restore file contexts for protected files
-RUN restorecon -v /etc/containers/policy.json /etc/selinux/config /usr/lib/systemd/system/selinux-lockdown.service /etc/containers/registries.d/quay.io-rhel-dev.yaml
+RUN restorecon -v /etc/containers/policy.json /etc/selinux/config /etc/containers/registries.d/quay.io-rhel-dev.yaml
 
 # Kernel args for SELinux enforcement (read-only /usr on bootc)
 RUN mkdir -p /usr/lib/bootc/kargs.d
