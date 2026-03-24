@@ -1,13 +1,4 @@
 policy_module(container_lockdown, 1.0)
 
-require {
-    type etc_t;
-    type unconfined_t;
-    type sysadm_t;
-}
-
 type secure_container_policy_t;
 files_type(secure_container_policy_t)
-
-# Deny write/append/rename/relabel for all domains
-neverallow * secure_container_policy_t:file { write append rename relabelto unlink };

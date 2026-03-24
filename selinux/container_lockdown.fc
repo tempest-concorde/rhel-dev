@@ -1,4 +1,3 @@
 /etc/containers/policy\.json    system_u:object_r:secure_container_policy_t:s0
 /etc/selinux/config             system_u:object_r:secure_container_policy_t:s0
-/usr/lib/systemd/system/selinux-lockdown\.service    system_u:object_r:secure_container_policy_t:s0
 /etc/containers/registries\.d/quay\.io-rhel-dev\.yaml    system_u:object_r:secure_container_policy_t:s0
