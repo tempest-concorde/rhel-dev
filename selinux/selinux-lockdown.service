@@ -1,8 +1,6 @@
 [Unit]
 Description=Lock SELinux policy state
-DefaultDependencies=no
-Before=sysinit.target
-After=local-fs.target
+After=multi-user.target
 
 [Service]
 Type=oneshot
@@ -12,4 +10,4 @@ ExecStart=/usr/sbin/setsebool -P secure_mode 1
 RemainAfterExit=yes
 
 [Install]
-WantedBy=sysinit.target
+WantedBy=multi-user.target
