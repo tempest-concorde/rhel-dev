@@ -1,4 +1,0 @@
-policy_module(container_lockdown, 1.0)
-
-type secure_container_policy_t;
-files_type(secure_container_policy_t)
