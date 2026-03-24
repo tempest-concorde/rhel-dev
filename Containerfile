@@ -1,10 +1,3 @@
-# Stage 1: Compile SELinux policy module
-FROM registry.redhat.io/rhel10/rhel-bootc@sha256:612eebb0ad918e2dd2e265e2cb9f6d75e684471600711ea615752e6c41130140 AS selinux-builder
-RUN dnf install -y selinux-policy-devel && dnf clean all
-COPY selinux/container_lockdown.te selinux/container_lockdown.fc /tmp/selinux/
-RUN cd /tmp/selinux && make -f /usr/share/selinux/devel/Makefile container_lockdown.pp
-
-# Stage 2: Final image
 FROM registry.redhat.io/rhel10/rhel-bootc@sha256:612eebb0ad918e2dd2e265e2cb9f6d75e684471600711ea615752e6c41130140
 
 # Runtime packages (single dnf layer)
@@ -93,21 +86,13 @@ RUN mkdir -p /usr/share/pki/sigstore
 COPY containers-policy/cosign.pub /usr/share/pki/sigstore/cosign.pub
 COPY containers-policy/quay.io-rhel-dev.yaml /etc/containers/registries.d/quay.io-rhel-dev.yaml
 
-# Container image signature verification policy (protected by SELinux)
+# Container image signature verification policy
 COPY containers-policy/policy.json /etc/containers/policy.json
+RUN chmod 0444 /etc/containers/policy.json /etc/containers/registries.d/quay.io-rhel-dev.yaml
 
-# Install pre-compiled SELinux policy module from builder stage
-COPY --from=selinux-builder /tmp/selinux/container_lockdown.pp /tmp/container_lockdown.pp
-COPY selinux/container_lockdown_deny.cil /tmp/container_lockdown_deny.cil
-RUN semodule -i /tmp/container_lockdown.pp /tmp/container_lockdown_deny.cil && \
-    rm /tmp/container_lockdown.pp /tmp/container_lockdown_deny.cil
-
-# SELinux lockdown service (sets secure_mode_policyload and secure_mode_insmod at boot)
+# SELinux lockdown service (hardens SELinux booleans and sets immutable flag on policy files at boot)
 COPY selinux/selinux-lockdown.service /usr/lib/systemd/system/selinux-lockdown.service
 RUN systemctl enable selinux-lockdown.service
-
-# Restore file contexts for protected files
-RUN restorecon -v /etc/containers/policy.json /etc/selinux/config /etc/containers/registries.d/quay.io-rhel-dev.yaml
 
 # Kernel args for SELinux enforcement (read-only /usr on bootc)
 RUN mkdir -p /usr/lib/bootc/kargs.d
