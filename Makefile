@@ -51,7 +51,14 @@ get-direnv:
 		echo "direnv: cached"; \
 	else \
 		wget -q https://github.com/direnv/direnv/releases/download/v$(DIRENV_VERSION)/direnv.linux-$(BINARY_ARCH) -O direnv; \
-		EXPECTED=$$(curl -sf "https://api.github.com/repos/direnv/direnv/releases/tags/v$(DIRENV_VERSION)" | jq -r '.assets[] | select(.name == "direnv.linux-$(BINARY_ARCH)") | .digest' | sed 's/sha256://'); \
+		EXPECTED=""; \
+		for i in 1 2 3; do \
+			EXPECTED=$$(curl -sf --retry 3 "https://api.github.com/repos/direnv/direnv/releases/tags/v$(DIRENV_VERSION)" | jq -r '.assets[] | select(.name == "direnv.linux-$(BINARY_ARCH)") | .digest' | sed 's/sha256://'); \
+			[ -n "$$EXPECTED" ] && break; \
+			echo "direnv: retrying GitHub API (attempt $$i)..."; \
+			sleep 5; \
+		done; \
+		if [ -z "$$EXPECTED" ]; then echo "direnv: failed to fetch checksum from GitHub API" >&2; exit 1; fi; \
 		echo "$$EXPECTED  direnv" | sha256sum -c -; \
 	fi
 
@@ -116,6 +123,9 @@ get-argocd:
 	fi
 
 get-deps: get-direnv $(OCP_TARGETS) get-oc get-oc-mirror get-gomplate get-cosign get-argocd
+
+clean:
+	rm -f direnv oc kubectl oc-mirror gomplate cosign argocd openshift-install-4*
 
 verify:
 	cosign verify \

@@ -59,14 +59,24 @@ Base: `registry.redhat.io/rhel10/rhel-bootc`
 
 ### Environment variables
 
-Set these before building:
+The easiest way to manage environment variables is with [direnv](https://direnv.net/):
 
 ```shell
+cp .envrc.sample .envrc
+# Edit .envrc with your values
+direnv allow
+```
+
+Alternatively, export them manually:
+
+```shell
+export USERNAME=myusername
+export PASSWORD_HASH='' # openssl passwd -6 (use single quotes)
 export SSH_KEY_PATH=$HOME/.ssh/id_rsa.pub
 export DOCKER_AUTH_PATH=$(pwd)/docker-auth.json
-export PASSWORD_HASH='' # openssl passwd -6 (use single quotes)
-export USERNAME=myusername
 ```
+
+See `.envrc.sample` for all available options including `GRUB_PASSWORD_HASH` and `NOPASSWD_SUDO`.
 
 ### Build
 
