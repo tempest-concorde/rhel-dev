@@ -39,6 +39,18 @@ echo "{{ env.Getenv "USERNAME" }} ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/{{ e
 chmod 440 /etc/sudoers.d/{{ env.Getenv "USERNAME" }}
 {{ end }}
 
+mkdir -p /home/{{ env.Getenv "USERNAME" }}/.config/containers
+cat > /home/{{ env.Getenv "USERNAME" }}/.config/containers/policy.json << 'POLICY_EOF'
+{
+    "default": [
+        {
+            "type": "insecureAcceptAnything"
+        }
+    ]
+}
+POLICY_EOF
+chown -R 1000:1000 /home/{{ env.Getenv "USERNAME" }}/.config
+
 %end
 
 reboot --eject
