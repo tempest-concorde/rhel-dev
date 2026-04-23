@@ -92,7 +92,7 @@ RUN chmod 0444 /etc/containers/policy.json /etc/containers/registries.d/quay.io-
 
 # SELinux lockdown service (hardens SELinux booleans and sets immutable flag on policy files at boot)
 COPY selinux/selinux-lockdown.service /usr/lib/systemd/system/selinux-lockdown.service
-RUN systemctl enable selinux-lockdown.service
+RUN systemctl enable selinux-lockdown.service qemu-guest-agent.service
 
 # Kernel args for SELinux enforcement (read-only /usr on bootc)
 RUN mkdir -p /usr/lib/bootc/kargs.d
