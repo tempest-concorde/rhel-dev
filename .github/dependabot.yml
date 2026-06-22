@@ -12,6 +12,10 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    groups:
+      all-actions:
+        patterns:
+          - "*"
   - package-ecosystem: "docker"
     # Look for the Dockerfile or Containerfile in the root directory
     directory: "/"
@@ -21,3 +25,7 @@ updates:
     commit-message:
       prefix: chore
       include: scope
+    groups:
+      all-docker:
+        patterns:
+          - "*"
