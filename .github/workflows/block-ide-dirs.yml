@@ -1,5 +1,7 @@
 name: Block IDE/agent config directories
 on: [pull_request, push]
+permissions:
+  contents: read
 jobs:
   block-ide-dirs:
     runs-on: ubuntu-latest
