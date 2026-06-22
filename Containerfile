@@ -20,9 +20,11 @@ RUN dnf group install -y "Minimal Install" && \
         python3-cryptography \
         python3-firewall \
         python3-passlib \
+        python3-pip \
         qemu-guest-agent \
         skopeo \
         tailscale \
+        tmux \
         vim \
         vim-enhanced \
         yq && \
