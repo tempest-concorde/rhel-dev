@@ -225,3 +225,5 @@ argocd
 butane
 output/
 *.tar.gz
+.vscode/
+.claude/
